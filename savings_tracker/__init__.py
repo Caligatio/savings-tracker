@@ -31,7 +31,7 @@ def main(savings_file: pathlib.Path) -> None:
     needed_savings = savings_data.get('base', 0)
     goals: List[SavingsGoal] = []
 
-    for i, goal in enumerate(savings_data['goals']):
+    for i, goal in enumerate(savings_data.get('goals', [])):
         start_date = iso8601.parse_date(goal['start_date']).date()
         spend_date = iso8601.parse_date(goal['spend_date']).date()
         total_days = (spend_date - start_date).days
