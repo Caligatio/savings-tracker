@@ -110,7 +110,7 @@ def main(savings_file: pathlib.Path) -> None:
                 goal.spend_date,
                 "{:.0f}%".format(goal.percentage * 100),
                 str(goal.amount).ljust(max(amount_len, len("Goal") - 1)),
-                "{:.2f}".format(fortnightly_amount).ljust(
+                "{:.0f}".format(fortnightly_amount).ljust(
                     max(amount_len, len("Fortnightly Amount") - 1)
                 ),
                 str(goal.target_savings).ljust(
