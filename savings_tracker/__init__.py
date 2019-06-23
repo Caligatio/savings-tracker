@@ -17,6 +17,7 @@ class SavingsGoal(NamedTuple):
     start_date: date
     spend_date: date
     percentage: float
+    fortnightly_amount: float
     target_savings: int
 
 
@@ -30,6 +31,7 @@ def main(savings_file: pathlib.Path) -> None:
     amount_len = len("{}".format(savings_data.get("base", 0)))
     needed_savings = savings_data.get("base", 0)
     goals: List[SavingsGoal] = []
+    fortnightly_total = 0.0
 
     for i, goal in enumerate(savings_data.get("goals", [])):
         start_date = iso8601.parse_date(goal["start_date"]).date()
@@ -58,6 +60,7 @@ def main(savings_file: pathlib.Path) -> None:
                 start_date,
                 spend_date,
                 min(1.0, days_saved / total_days),
+                14 * (goal["amount"] / total_days),
                 int(percent_savings * goal["amount"]),
             )
         )
@@ -66,38 +69,50 @@ def main(savings_file: pathlib.Path) -> None:
 
     # Print the top part of the header
     print(
-        "┏━{}━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━{}━┳━{}━┓".format(
+        "┏━{}━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━{}━┳━{}━┳━{}━┓".format(
             max(name_len, len("Name")) * "━",
             max(amount_len + 1, len("Goal")) * "━",
+            max(amount_len + 1, len("Fortnightly Amount")) * "━",
             max(amount_len + 1, len("Amount Saved")) * "━",
         )
     )
     # Print the header labels
     print(
-        "┃ {} ┃ Start Date ┃  End Date  ┃ Percentage ┃ {} ┃ {} ┃".format(
+        "┃ {} ┃ Start Date ┃  End Date  ┃ Percentage ┃ {} ┃ {} ┃ {} ┃".format(
             "Name".center(max(name_len, len("Name"))),
             "Goal".center(max(amount_len + 1, len("Goal"))),
+            "Fortnightly Amount".center(max(amount_len + 1, len("Fortnightly Amount"))),
             "Amount Saved".center(max(amount_len + 1, len("Amount Saved"))),
         )
     )
     # Print the bottom part of the header
     print(
-        "┡━{}━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━{}━╇━{}━┩".format(
+        "┡━{}━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━{}━╇━{}━╇━{}━┩".format(
             max(name_len, len("Name")) * "━",
             max(amount_len + 1, len("Goal")) * "━",
+            max(amount_len + 1, len("Fortnightly Amount")) * "━",
             max(amount_len + 1, len("Amount Saved")) * "━",
         )
     )
 
     # Print the individual goals
     for goal in goals:
+        if goal.percentage < 1.0:
+            fortnightly_amount = goal.fortnightly_amount
+        else:
+            fortnightly_amount = 0
+
+        fortnightly_total += fortnightly_amount
         print(
-            "│ {} │ {} │ {} │ {:10} │ ${} │ ${} │".format(
+            "│ {} │ {} │ {} │ {:10} │ ${} │ ${} │ ${} │".format(
                 goal.name.ljust(max(name_len, len("Name"))),
                 goal.start_date,
                 goal.spend_date,
                 "{:.0f}%".format(goal.percentage * 100),
                 str(goal.amount).ljust(max(amount_len, len("Goal") - 1)),
+                "{:.2f}".format(fortnightly_amount).ljust(
+                    max(amount_len, len("Fortnightly Amount") - 1)
+                ),
                 str(goal.target_savings).ljust(
                     max(amount_len, len("Amount Saved") - 1)
                 ),
@@ -107,9 +122,10 @@ def main(savings_file: pathlib.Path) -> None:
     # Make a pseudo row for the base savings
     if savings_data.get("base", 0):
         print(
-            "│ {} │            │            │            │ {} │ ${} │".format(
+            "│ {} │            │            │            │ {} │ {} │ ${} │".format(
                 "Base".ljust(max(name_len, len("Name"))),
                 " " * max(amount_len + 1, len("Goal")),
+                " " * max(amount_len + 1, len("Fortnightly Amount")),
                 str(savings_data["base"]).ljust(
                     max(amount_len, len("Amount Saved") - 1)
                 ),
@@ -117,14 +133,16 @@ def main(savings_file: pathlib.Path) -> None:
         )
 
     print(
-        "└─{}─┴────────────┴────────────┴────────────┴─{}─┴─{}─┘".format(
+        "└─{}─┴────────────┴────────────┴────────────┴─{}─┴─{}─┴─{}─┘".format(
             max(name_len, len("Name")) * "─",
             max(amount_len + 1, len("Goal")) * "─",
+            max(amount_len + 1, len("Fortnightly Amount")) * "─",
             max(amount_len + 1, len("Amount Saved")) * "─",
         )
     )
 
-    print("\nTotal: ${:.0f}".format(needed_savings))
+    print("\nFortnightly Amount: ${:.0f}".format(fortnightly_total))
+    print("Total: ${:.0f}".format(needed_savings))
 
 
 def cli() -> int:
