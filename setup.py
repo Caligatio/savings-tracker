@@ -18,7 +18,7 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,
-    platforms="any",
+    python_requires=">=3.6",
     install_requires=install_requires,
     classifiers=[
         "License :: OSI Approved :: MIT License",
